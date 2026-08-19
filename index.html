@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Preços 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- SheetJS CDN para ler o arquivo Excel (.xlsx) dinamicamente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header-banner {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            padding: 2.5rem 0 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .category-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+            background: white;
+            overflow: hidden;
+        }
+        .category-header-nv1 {
+            background-color: #0d6efd;
+            color: white;
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        .category-header-nv2 {
+            background-color: #e7f1ff;
+            color: #084298;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #b6d4fe;
+        }
+        .category-header-nv3 {
+            background-color: #f8f9fa;
+            color: #495057;
+            padding: 0.5rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+        .table th {
+            background-color: #f1f3f5;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .price-tag {
+            font-weight: 700;
+            color: #198754;
+        }
+        .badge-ir {
+            background-color: #e2e3e5;
+            color: #41464b;
+            font-weight: 500;
+        }
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border: 1px solid #e9ecef;
+        }
+        .filter-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-download-pdf {
+            background-color: #dc3545;
+            color: white;
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+            transition: all 0.2s ease-in-out;
+            border: none;
+        }
+        .btn-download-pdf:hover {
+            background-color: #bb2d3b;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Estilos exclusivos para impressão e PDF */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 10mm;
+            }
+            body {
+                background-color: #ffffff !important;
+                font-size: 8pt !important;
+                color: #000 !important;
+            }
+            .header-banner, .filter-card, .btn-download-pdf, .badge, #searchInput, .btn-sm {
+                display: none !important;
+            }
+            .container {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                border-bottom: 2px solid #0d6efd;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+            }
+            .print-header h2 {
+                margin: 0;
+                font-size: 16pt;
+                color: #0d6efd;
+                font-weight: bold;
+            }
+            .print-header p {
+                margin: 2px 0 0 0;
+                font-size: 9pt;
+                color: #555;
+            }
+            .category-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                margin-bottom: 15px !important;
+                page-break-inside: auto;
+            }
+            .category-header-nv1 {
+                background-color: #0d6efd !important;
+                color: white !important;
+                padding: 6px 10px !important;
+                font-size: 11pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                page-break-after: avoid;
+            }
+            .category-header-nv2 {
+                background-color: #e7f1ff !important;
+                color: #084298 !important;
+                padding: 5px 10px !important;
+                font-size: 9.5pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                page-break-after: avoid;
+            }
+            .category-header-nv3 {
+                background-color: #f8f9fa !important;
+                color: #333 !important;
+                padding: 4px 10px !important;
+                font-size: 8.5pt !important;
+                font-weight: bold;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                page-break-after: avoid;
+            }
+            .table {
+                font-size: 8pt !important;
+                width: 100% !important;
+            }
+            .table th {
+                background-color: #eee !important;
+                color: #000 !important;
+                padding: 4px 6px !important;
+                font-size: 7.5pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .table td {
+                padding: 3px 6px !important;
+            }
+            .price-tag {
+                color: #000 !important;
+                font-weight: bold !important;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+        }
+
+        .print-header {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho visível somente na impressão/PDF -->
+    <div class="print-header">
+        <h2>TABELA DE PREÇOS 2026</h2>
+        <p>Catálogo Geral de Produtos e Lentes Organizado por Categorias</p>
+    </div>
+
+    <div class="header-banner">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h1 class="fw-bold mb-1"><i class="bi bi-glasses me-2"></i>Tabela de Preços 2026</h1>
+                    <p class="mb-0 opacity-75">Atualização Dinâmica via Planilha Excel no Repositório</p>
+                </div>
+                <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-column align-items-md-end justify-content-center">
+                    <button class="btn btn-download-pdf mb-2" onclick="downloadPDF()">
+                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>Baixar Tabela em PDF
+                    </button>
+                    <span class="badge bg-light text-primary fs-6 px-3 py-1 rounded-pill" id="syncStatus">
+                        <i class="bi bi-arrow-repeat spin me-1"></i> Carregando dados da planilha...
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <!-- Multilevel Category Navigation & Search Panel -->
+        <div class="filter-card">
+            <div class="row g-3">
+                <!-- Search Input -->
+                <div class="col-12 mb-2">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-0 py-2" placeholder="Buscar por descrição, código ou parâmetro...">
+                    </div>
+                </div>
+
+                <!-- NV1 Filter Dropdown -->
+                <div class="col-md-4">
+                    <label class="filter-label"><i class="bi bi-layers me-1"></i> Categoria Nível 1</label>
+                    <select id="selectNv1" class="form-select shadow-sm" onchange="onNv1Change()">
+                        <option value="ALL">Todas as Categorias (Nível 1)</option>
+                    </select>
+                </div>
+
+                <!-- NV2 Filter Dropdown -->
+                <div class="col-md-4">
+                    <label class="filter-label"><i class="bi bi-folder2-open me-1"></i> Categoria Nível 2</label>
+                    <select id="selectNv2" class="form-select shadow-sm" onchange="onNv2Change()">
+                        <option value="ALL">Todas as Subcategorias (Nível 2)</option>
+                    </select>
+                </div>
+
+                <!-- NV3 Filter Dropdown -->
+                <div class="col-md-4">
+                    <label class="filter-label"><i class="bi bi-tag me-1"></i> Categoria Nível 3</label>
+                    <select id="selectNv3" class="form-select shadow-sm" onchange="onNv3Change()">
+                        <option value="ALL">Todos os Grupos (Nível 3)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Active Filters Summary & Clear Button -->
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                <small class="text-muted" id="filterSummary">Aguardando leitura do arquivo Excel...</small>
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="resetFilters()">
+                    <i class="bi bi-x-circle me-1"></i>Limpar Filtros
+                </button>
+            </div>
+        </div>
+
+        <!-- Products Container -->
+        <div id="catalogContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-3 text-muted">Processando planilha Excel em tempo real...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Nome exato da planilha armazenada no repositório GitHub
+        const EXCEL_FILE_PATH = "TABELA DE PREÇOS 2026.xlsx";
+        let catalogData = {};
+
+        // Carrega dinamicamente a planilha Excel via Fetch + SheetJS
+        async function fetchAndProcessExcel() {
+            const statusBadge = document.getElementById('syncStatus');
+            try {
+                // Adiciona um timestamp na URL para evitar cache e sempre pegar a planilha mais recente do GitHub
+                const response = await fetch(EXCEL_FILE_PATH + '?v=' + new Date().getTime());
+                if (!response.ok) {
+                    throw new Error("Não foi possível carregar a planilha " + EXCEL_FILE_PATH);
+                }
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // Lê a primeira aba da planilha
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "-" });
+
+                // Transforma os dados brutos na estrutura de 3 Níveis
+                catalogData = buildCatalogStructure(rawJson);
+
+                statusBadge.className = "badge bg-success text-white fs-6 px-3 py-1 rounded-pill";
+                statusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i> Sincronizado com Excel';
+
+                initCategoryMenus();
+                renderCatalog();
+            } catch (err) {
+                console.error(err);
+                statusBadge.className = "badge bg-danger text-white fs-6 px-3 py-1 rounded-pill";
+                statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Erro ao carregar Excel';
+                document.getElementById('catalogContainer').innerHTML = `
+                    <div class="alert alert-danger text-center my-4" role="alert">
+                        <h4 class="alert-heading"><i class="bi bi-file-earmark-excel me-2"></i>Erro ao carregar o arquivo Excel</h4>
+                        <p class="mb-0">Certifique-se de que o arquivo <code>TABELA DE PREÇOS 2026.xlsx</code> está na mesma pasta do arquivo <code>index.html</code> no seu repositório do GitHub.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Constrói objeto hierárquico NV1 -> NV2 -> NV3 -> Lista de Produtos
+        function buildCatalogStructure(rows) {
+            const result = {};
+
+            rows.forEach(row => {
+                const nv1 = String(row['CATEGORIA NV 1'] || 'OUTROS').trim();
+                const nv2 = String(row['CATEGORIA NV 2'] || 'OUTROS').trim();
+                const nv3 = String(row['CATEGORIA NV 3'] || 'OUTROS').trim();
+
+                const product = {
+                    codigo: String(row['CÓDIGO'] || '-'),
+                    descricao: String(row['DESCRIÇÃO'] || '-'),
+                    ir: String(row['IR'] || '-'),
+                    esferico: String(row['ESFÉRICO'] || '-'),
+                    cil: String(row['CIL.'] || '-'),
+                    adicao: String(row['ADIÇÃO'] || '-'),
+                    prazo: String(row['PRAZO'] || '-'),
+                    valor: parseFloat(row['VALOR']) || 0.0
+                };
+
+                if (!result[nv1]) result[nv1] = {};
+                if (!result[nv1][nv2]) result[nv1][nv2] = {};
+                if (!result[nv1][nv2][nv3]) result[nv1][nv2][nv3] = [];
+
+                result[nv1][nv2][nv3].push(product);
+            });
+
+            return result;
+        }
+
+        function initCategoryMenus() {
+            const selectNv1 = document.getElementById('selectNv1');
+            selectNv1.innerHTML = '<option value="ALL">Todas as Categorias (Nível 1)</option>';
+
+            for (const nv1 of Object.keys(catalogData).sort()) {
+                const opt = document.createElement('option');
+                opt.value = nv1;
+                opt.textContent = nv1;
+                selectNv1.appendChild(opt);
+            }
+
+            updateNv2Dropdown();
+            updateNv3Dropdown();
+        }
+
+        function updateNv2Dropdown() {
+            const selectNv1 = document.getElementById('selectNv1').value;
+            const selectNv2 = document.getElementById('selectNv2');
+            selectNv2.innerHTML = '<option value="ALL">Todas as Subcategorias (Nível 2)</option>';
+
+            const nv2Set = new Set();
+            for (const [nv1, nv2Group] of Object.entries(catalogData)) {
+                if (selectNv1 === 'ALL' || selectNv1 === nv1) {
+                    for (const nv2 of Object.keys(nv2Group)) {
+                        nv2Set.add(nv2);
+                    }
+                }
+            }
+
+            Array.from(nv2Set).sort().forEach(nv2 => {
+                const opt = document.createElement('option');
+                opt.value = nv2;
+                opt.textContent = nv2;
+                selectNv2.appendChild(opt);
+            });
+
+            updateNv3Dropdown();
+        }
+
+        function updateNv3Dropdown() {
+            const selectNv1 = document.getElementById('selectNv1').value;
+            const selectNv2 = document.getElementById('selectNv2').value;
+            const selectNv3 = document.getElementById('selectNv3');
+            selectNv3.innerHTML = '<option value="ALL">Todos os Grupos (Nível 3)</option>';
+
+            const nv3Set = new Set();
+            for (const [nv1, nv2Group] of Object.entries(catalogData)) {
+                if (selectNv1 === 'ALL' || selectNv1 === nv1) {
+                    for (const [nv2, nv3Group] of Object.entries(nv2Group)) {
+                        if (selectNv2 === 'ALL' || selectNv2 === nv2) {
+                            for (const nv3 of Object.keys(nv3Group)) {
+                                nv3Set.add(nv3);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Array.from(nv3Set).sort().forEach(nv3 => {
+                const opt = document.createElement('option');
+                opt.value = nv3;
+                opt.textContent = nv3;
+                selectNv3.appendChild(opt);
+            });
+        }
+
+        function onNv1Change() {
+            updateNv2Dropdown();
+            renderCatalog();
+        }
+
+        function onNv2Change() {
+            updateNv3Dropdown();
+            renderCatalog();
+        }
+
+        function onNv3Change() {
+            renderCatalog();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('selectNv1').value = 'ALL';
+            updateNv2Dropdown();
+            renderCatalog();
+        }
+
+        function renderCatalog() {
+            const filterNv1 = document.getElementById('selectNv1').value;
+            const filterNv2 = document.getElementById('selectNv2').value;
+            const filterNv3 = document.getElementById('selectNv3').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const container = document.getElementById('catalogContainer');
+            container.innerHTML = '';
+            let totalItemsCount = 0;
+
+            for (const [nv1, nv2Group] of Object.entries(catalogData)) {
+                if (filterNv1 !== 'ALL' && filterNv1 !== nv1) continue;
+
+                let nv1HasItems = false;
+                let nv1Html = `<div class="category-card" data-nv1="${nv1}">
+                    <div class="category-header-nv1"><i class="bi bi-layers me-2"></i>${nv1}</div>`;
+
+                for (const [nv2, nv3Group] of Object.entries(nv2Group)) {
+                    if (filterNv2 !== 'ALL' && filterNv2 !== nv2) continue;
+
+                    let nv2HasItems = false;
+                    let nv2Html = `<div class="category-header-nv2"><i class="bi bi-folder2-open me-2"></i>${nv2}</div>`;
+
+                    for (const [nv3, products] of Object.entries(nv3Group)) {
+                        if (filterNv3 !== 'ALL' && filterNv3 !== nv3) continue;
+
+                        const filteredProducts = products.filter(p => {
+                            if (!searchVal) return true;
+                            return p.codigo.toLowerCase().includes(searchVal) ||
+                                   p.descricao.toLowerCase().includes(searchVal) ||
+                                   nv1.toLowerCase().includes(searchVal) ||
+                                   nv2.toLowerCase().includes(searchVal) ||
+                                   nv3.toLowerCase().includes(searchVal);
+                        });
+
+                        if (filteredProducts.length > 0) {
+                            nv1HasItems = true;
+                            nv2HasItems = true;
+                            totalItemsCount += filteredProducts.length;
+
+                            nv2Html += `
+                                <div class="category-header-nv3"><i class="bi bi-tag me-2"></i>${nv3}</div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 90px;">Código</th>
+                                                <th>Descrição</th>
+                                                <th style="width: 70px;">I.R.</th>
+                                                <th>Esférico</th>
+                                                <th>Cilindro</th>
+                                                <th>Adição</th>
+                                                <th style="width: 90px;">Prazo</th>
+                                                <th style="width: 110px;" class="text-end">Valor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+
+                            filteredProducts.forEach(p => {
+                                const valorFmt = p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                nv2Html += `
+                                    <tr>
+                                        <td><code>${p.codigo}</code></td>
+                                        <td class="fw-medium">${p.descricao}</td>
+                                        <td><span class="badge badge-ir">${p.ir}</span></td>
+                                        <td>${p.esferico}</td>
+                                        <td>${p.cil}</td>
+                                        <td>${p.adicao}</td>
+                                        <td><small class="text-muted"><i class="bi bi-clock me-1"></i>${p.prazo}</small></td>
+                                        <td class="text-end price-tag">${valorFmt}</td>
+                                    </tr>
+                                `;
+                            });
+
+                            nv2Html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    if (nv2HasItems) {
+                        nv1Html += nv2Html;
+                    }
+                }
+
+                nv1Html += `</div>`;
+
+                if (nv1HasItems) {
+                    container.innerHTML += nv1Html;
+                }
+            }
+
+            const summaryEl = document.getElementById('filterSummary');
+            summaryEl.textContent = `Exibindo ${totalItemsCount} produto(s) encontrado(s).`;
+
+            if (totalItemsCount === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-search text-muted display-1"></i>
+                        <h4 class="mt-3 text-secondary">Nenhum produto encontrado</h4>
+                        <p class="text-muted">Tente ajustar a busca ou selecione outras opções nos menus de categoria.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function downloadPDF() {
+            window.print();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderCatalog);
+
+        // Inicia a leitura do arquivo Excel ao carregar a página
+        window.addEventListener('DOMContentLoaded', fetchAndProcessExcel);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
