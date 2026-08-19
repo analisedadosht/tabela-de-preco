@@ -6,8 +6,6 @@
     <title>Tabela de Preços 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- SheetJS CDN para ler o arquivo Excel (.xlsx) dinamicamente -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
             background-color: #f4f6f9;
@@ -105,7 +103,7 @@
             box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
         }
 
-        /* Estilos exclusivos para impressão e PDF */
+        /* Estilos para impressão e salvamento em PDF */
         @media print {
             @page {
                 size: A4 portrait;
@@ -207,7 +205,7 @@
 </head>
 <body>
 
-    <!-- Cabeçalho visível somente na impressão/PDF -->
+    <!-- Cabeçalho de impressão -->
     <div class="print-header">
         <h2>TABELA DE PREÇOS 2026</h2>
         <p>Catálogo Geral de Produtos e Lentes Organizado por Categorias</p>
@@ -218,14 +216,14 @@
             <div class="row align-items-center">
                 <div class="col-md-7">
                     <h1 class="fw-bold mb-1"><i class="bi bi-glasses me-2"></i>Tabela de Preços 2026</h1>
-                    <p class="mb-0 opacity-75">Atualização Dinâmica via Planilha Excel no Repositório</p>
+                    <p class="mb-0 opacity-75">Integração Segura via Google Drive & Apps Script API</p>
                 </div>
                 <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-column align-items-md-end justify-content-center">
                     <button class="btn btn-download-pdf mb-2" onclick="downloadPDF()">
                         <i class="bi bi-file-earmark-pdf-fill me-2"></i>Baixar Tabela em PDF
                     </button>
                     <span class="badge bg-light text-primary fs-6 px-3 py-1 rounded-pill" id="syncStatus">
-                        <i class="bi bi-arrow-repeat spin me-1"></i> Carregando dados da planilha...
+                        <i class="bi bi-arrow-repeat spin me-1"></i> Conectando ao Google Drive...
                     </span>
                 </div>
             </div>
@@ -271,7 +269,7 @@
 
             <!-- Active Filters Summary & Clear Button -->
             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                <small class="text-muted" id="filterSummary">Aguardando leitura do arquivo Excel...</small>
+                <small class="text-muted" id="filterSummary">Aguardando resposta do Google Drive...</small>
                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="resetFilters()">
                     <i class="bi bi-x-circle me-1"></i>Limpar Filtros
                 </button>
@@ -284,56 +282,55 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Carregando...</span>
                 </div>
-                <p class="mt-3 text-muted">Processando planilha Excel em tempo real...</p>
+                <p class="mt-3 text-muted">Buscando dados seguros do Google Drive...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Nome exato da planilha armazenada no repositório GitHub
-        const EXCEL_FILE_PATH = "TABELA DE PREÇOS 2026.xlsx";
+        // URL configurada do Web App do Google Apps Script
+        const GOOGLE_SCRIPT_WEB_APP_URL = "https://script.google.com/a/macros/grupohtoticas.com.br/s/AKfycbzch3dGn922iwqooBgEmpQRZ1TzjaIyYKCfmhvM9blt_CYVkMTQ_r2zpXZjGVhLAwM/exec";
+
         let catalogData = {};
 
-        // Carrega dinamicamente a planilha Excel via Fetch + SheetJS
-        async function fetchAndProcessExcel() {
+        // Requisição para o Web App do Google Apps Script
+        async function fetchGoogleDriveData() {
             const statusBadge = document.getElementById('syncStatus');
             try {
-                // Adiciona um timestamp na URL para evitar cache e sempre pegar a planilha mais recente do GitHub
-                const response = await fetch(EXCEL_FILE_PATH + '?v=' + new Date().getTime());
+                const response = await fetch(GOOGLE_SCRIPT_WEB_APP_URL);
                 if (!response.ok) {
-                    throw new Error("Não foi possível carregar a planilha " + EXCEL_FILE_PATH);
+                    throw new Error("Erro na requisição: " + response.statusText);
                 }
-                
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                // Lê a primeira aba da planilha
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "-" });
 
-                // Transforma os dados brutos na estrutura de 3 Níveis
-                catalogData = buildCatalogStructure(rawJson);
+                const result = await response.json();
+                
+                if (result.status === "error") {
+                    throw new Error(result.message);
+                }
+
+                // Processa a lista de linhas retornadas pelo Google Apps Script
+                catalogData = buildCatalogStructure(result.data);
 
                 statusBadge.className = "badge bg-success text-white fs-6 px-3 py-1 rounded-pill";
-                statusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i> Sincronizado com Excel';
+                statusBadge.innerHTML = '<i class="bi bi-shield-check me-1"></i> Google Drive Sincronizado';
 
                 initCategoryMenus();
                 renderCatalog();
             } catch (err) {
                 console.error(err);
                 statusBadge.className = "badge bg-danger text-white fs-6 px-3 py-1 rounded-pill";
-                statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Erro ao carregar Excel';
+                statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Erro de Conexão';
                 document.getElementById('catalogContainer').innerHTML = `
                     <div class="alert alert-danger text-center my-4" role="alert">
-                        <h4 class="alert-heading"><i class="bi bi-file-earmark-excel me-2"></i>Erro ao carregar o arquivo Excel</h4>
-                        <p class="mb-0">Certifique-se de que o arquivo <code>TABELA DE PREÇOS 2026.xlsx</code> está na mesma pasta do arquivo <code>index.html</code> no seu repositório do GitHub.</p>
+                        <h4 class="alert-heading"><i class="bi bi-shield-slash me-2"></i>Erro ao carregar dados do Google Drive</h4>
+                        <p class="mb-2">Verifique a publicação do Google Apps Script no domínio <strong>grupohtoticas.com.br</strong>.</p>
+                        <small class="text-muted">Detalhes do erro: ${err.message}</small>
                     </div>
                 `;
             }
         }
 
-        // Constrói objeto hierárquico NV1 -> NV2 -> NV3 -> Lista de Produtos
+        // Constrói objeto hierárquico Nível 1 -> Nível 2 -> Nível 3
         function buildCatalogStructure(rows) {
             const result = {};
 
@@ -565,8 +562,8 @@
 
         document.getElementById('searchInput').addEventListener('input', renderCatalog);
 
-        // Inicia a leitura do arquivo Excel ao carregar a página
-        window.addEventListener('DOMContentLoaded', fetchAndProcessExcel);
+        // Inicia a requisição ao Google Apps Script
+        window.addEventListener('DOMContentLoaded', fetchGoogleDriveData);
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
